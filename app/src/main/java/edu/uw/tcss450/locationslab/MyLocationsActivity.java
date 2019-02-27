@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -21,9 +23,16 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MyLocationsActivity extends AppCompatActivity {
+public class MyLocationsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener  {
 
     private static final String TAG = "MyLocationsActivity"; /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
@@ -38,8 +47,12 @@ public class MyLocationsActivity extends AppCompatActivity {
     private Location mCurrentLocation;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback mLocationCallback;
-
     private TextView mLocationTextView;
+    private FragmentActivity map123 = new FragmentActivity();
+    private GoogleMap mMap;
+    /**
+     * The fastest rate for active location updates. Exact. Updates will never be more frequent * than this value.
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +62,16 @@ public class MyLocationsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         mLocationTextView = findViewById(R.id.txt_activitymain_location);
 
+
+
+        //on map press
+
+//        mCurrentLocation = (Location) getIntent().getParcelableExtra("LOCATION");
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
+
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,11 +79,9 @@ public class MyLocationsActivity extends AppCompatActivity {
                 if (mCurrentLocation == null) {
                     Snackbar.make(view, "Please wait for location to enable", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show(); } else {
-                    Intent i = new Intent(MyLocationsActivity.this, MapsActivity.class);
-                    //pass the current location on to the MapActivity when it is loaded
-                    i.putExtra("LOCATION", mCurrentLocation);
-                    startActivity(i);
+                    setContentView(R.layout.activity_maps);
                 }
+
             }
         });
 
@@ -91,6 +112,13 @@ public class MyLocationsActivity extends AppCompatActivity {
         };
 
         createLocationRequest();
+    }
+
+    public void onCreateView(View view) {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+
+        mapFragment.getMapAsync(this);
     }
 
     private void setLocation(final Location location) { mCurrentLocation = location;
@@ -201,5 +229,38 @@ public class MyLocationsActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Manipulates the map once available.
+     * This callback is triggered when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * we just add a marker near Sydney, Australia.
+     * If Google Play services is not installed on the device, the user will be prompted to install
+     * it inside the SupportMapFragment. This method will only be triggered once the user has
+     * installed Google Play services and returned to the app.
+     */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+
+        // Add a marker in the current device location and move the camera
+        LatLng current = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        mMap.addMarker(new MarkerOptions().position(current).title("Current Location"));
+        //Zoom levels are from 2.0f (zoomed out) to 21.f (zoomed in)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 15.0f));
+        mMap.setOnMapClickListener(this);
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        Log.d("LAT/LONG", latLng.toString());
+
+        Marker marker = mMap.addMarker(new MarkerOptions() .position(latLng)
+                .title("New Marker"));
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18.0f));
+
     }
 }
